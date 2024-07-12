@@ -1,7 +1,3 @@
-#output drive + sheets
-
-
-
 from google.colab import drive
 import os
 import requests
@@ -22,11 +18,11 @@ today_date = datetime.now().strftime('%Y-%m-%d')
 # Define London timezone
 london_tz = pytz.timezone('Europe/London')
 
-# Get the current time in London timezone
-now_london = datetime.now(london_tz)
+# # Get the current time in London timezone
+# now_london = datetime.now(london_tz)
 
-# Format the current time as YYYY-MM-DD HH:MM in London time
-time_of_search = now_london.strftime('%Y-%m-%d %H:%M')
+# # Format the current time as YYYY-MM-DD HH:MM in London time
+# time_of_search = now_london.strftime('%Y-%m-%d %H:%M')
 
 def map_level(code):
     """Maps single-letter codes to descriptive levels."""
@@ -89,7 +85,7 @@ def convert_to_datetime(time_str):
         return "N/A"
 
 
-def get_weather_data(session):
+def get_weather_data(session, time_of_search):
     """Fetches weather data from the specified URL and returns it as a dictionary."""
     url = 'https://www.bbc.com/weather/2643743'
     response = session.get(url)
@@ -149,7 +145,7 @@ def update_google_sheet(weather_data):
 
     # Authorize the client and open the spreadsheet
     gc = gspread.authorize(credentials)
-    sheet_url = # insert google sheets url
+    sheet_url = 'https://docs.google.com/spreadsheets/d/1Z9VKcE05zaiLd6rUOWAuvDVOzcB6B6qPs2EvGBUPQL4/edit?gid=0#gid=0'
     worksheet = gc.open_by_url(sheet_url).sheet1  # Open the first sheet
 
     # Append new data to the spreadsheet
@@ -164,6 +160,16 @@ def save_to_google_drive(df, file_path):
     """Saves DataFrame to Google Drive."""
     df.to_csv(file_path, index=False)
 
+
+def print_timer(seconds):
+    try:
+        while True:
+            print(f"\rTime elapsed: {seconds} seconds", end="", flush=True)
+            time.sleep(1)
+            seconds += 1
+    except KeyboardInterrupt:
+        print("\nTimer stopped by user")
+
 def main():
     drive.mount('/content/drive', force_remount=True)  # Ensure persistent authorization
     session = requests.Session()
@@ -171,7 +177,12 @@ def main():
 
     while True:
         try:
-            weather_data = get_weather_data(session)
+                        # Get the current time in London timezone
+            now_london = datetime.now(london_tz)
+
+            # Format the current time as YYYY-MM-DD HH:MM in London time
+            time_of_search = now_london.strftime('%Y-%m-%d %H:%M')
+            weather_data = get_weather_data(session, time_of_search)
 
             # Print the fetched weather data
             print("Weather data fetched:")
@@ -184,18 +195,20 @@ def main():
                 df = pd.concat([df, existing_df], ignore_index=True)
 
             save_to_google_drive(df, file_path)
+            print('saved to google drive!')
+
             update_google_sheet(weather_data)  # Update Google Sheet with weather data
 
             print(f"Weather data saved and Google Sheet updated successfully")
 
-            time.sleep(1800)  # Wait for 30 minutes before fetching data again
+            time.sleep(30)  # Wait for 30 minutes before fetching data again
 
         except Exception as e:
             print(f"Error occurred: {e}")
             print("Reconnecting Google Drive...")
             drive.mount('/content/drive', force_remount=True)  # Remount Google Drive
-            print("Reconnected. Retrying in 30 minutes...")
-            time.sleep(1800)  # Wait for 30 minutes before retrying
+            print("Reconnected. Retrying in 15 minutes...")
+            time.sleep(900)  # Wait for 15 minutes before retrying
 
 if __name__ == "__main__":
     main()
