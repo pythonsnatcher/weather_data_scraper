@@ -5,8 +5,17 @@ import requests
 from datetime import datetime
 import pandas as pd
 from lxml import html
+import pytz
 
-today_date = datetime.now().strftime('%Y-%m-%d')
+
+# Define London timezone
+london_tz = pytz.timezone('Europe/London')
+
+# Get the current time in London timezone
+now_london = datetime.now(london_tz)
+
+# Format the current time as YYYY-MM-DD HH:MM in London time
+time_of_search = now_london.strftime('%Y-%m-%d %H:%M')
 
 def map_level(code):
     """Maps single-letter codes to descriptive levels."""
@@ -89,7 +98,7 @@ def get_weather_data(session):
     tide_times = scrape_tide_times(session)
 
     weather_data = {
-        'Time of Search': datetime.now().strftime('%Y-%m-%d %H:%M'),
+        'Time of Search': time_of_search,
         'High Temperature(°C)': extract_and_clean('//*[@id="daylink-0"]/div[4]/div[1]/div/div[4]/div/div[1]/span[2]/span/span[1]', suffix='°', convert_to_float=True),
         'Low Temperature(°C)': extract_and_clean('//*[@id="daylink-0"]/div[4]/div[1]/div/div[4]/div/div[2]/span[2]/span/span[1]', suffix='°', convert_to_float=True),
         'Current Temperature(°C)': extract_and_clean('//*[@id="wr-forecast"]/div[4]/div/div[1]/div[2]/div/div/div/div[2]/ol/li[1]/button/div[1]/div[2]/div[3]/div[2]/div/div/div[2]/span/span[1]', suffix='°', convert_to_float=True),
