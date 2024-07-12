@@ -7,11 +7,11 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 
-# Get today's date in the required format (e.g., '2023-07-12')
-today_date = datetime.now().strftime('%Y-%m-%d')
-
 # Mount Google Drive
 drive.mount('/content/drive')
+
+#get todays date
+today_date = datetime.now().strftime('%Y-%m-%d')
 
 # Define London timezone
 london_tz = pytz.timezone('Europe/London')
@@ -46,7 +46,7 @@ def scrape_tide_times(session):
     low_tide_elem_morning_height = tree.xpath(low_tide_xpath_morning_height)
     low_tide_elem_evening_time = tree.xpath(low_tide_xpath_evening_time)
     low_tide_elem_evening_height = tree.xpath(low_tide_xpath_evening_height)
-    
+
     low_tide_time_morning = low_tide_elem_morning_time[0].text.strip() if low_tide_elem_morning_time else "N/A"
     low_tide_height_morning = low_tide_elem_morning_height[0].text.strip() if low_tide_elem_morning_height else "N/A"
     low_tide_time_evening = low_tide_elem_evening_time[0].text.strip() if low_tide_elem_evening_time else "N/A"
@@ -128,7 +128,7 @@ def get_weather_data(session):
         'Low Tide Evening Height(M)': tide_times[0][3],
         'High Tide Evening Time': tide_times[1][2],
         'High Tide Evening Height(M)': tide_times[1][3],
-        
+
     }
 
     return weather_data
@@ -140,7 +140,7 @@ def update_google_sheet(weather_data):
     scope = ['https://spreadsheets.google.com/feeds',
              'https://www.googleapis.com/auth/drive']
     credentials = ServiceAccountCredentials.from_json_keyfile_name('/content/drive/My Drive/weather-data-429210-af2c31cf7a66.json', scope)
-    
+
     # Authorize the client and open the spreadsheet
     gc = gspread.authorize(credentials)
     sheet_url = 'https://docs.google.com/spreadsheets/d/1Z9VKcE05zaiLd6rUOWAuvDVOzcB6B6qPs2EvGBUPQL4/edit?gid=0#gid=0'
@@ -148,9 +148,12 @@ def update_google_sheet(weather_data):
 
     # Append new data to the spreadsheet
     new_row = [weather_data[key] for key in weather_data.keys()]
-    worksheet.append_row(new_row)
-    print("Updated Google Sheet successfully!")
+
     
+    # Insert the new row below the header
+    worksheet.insert_row(new_row, index=2)
+    print("Updated Google Sheet successfully!")
+
 def main():
     """Main function to fetch weather data and update Google Sheet."""
     while True:
@@ -178,4 +181,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-    
+
