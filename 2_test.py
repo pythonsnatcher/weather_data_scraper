@@ -149,7 +149,7 @@ def update_google_sheet(weather_data):
 
     # Authorize the client and open the spreadsheet
     gc = gspread.authorize(credentials)
-    sheet_url = 'https://docs.google.com/spreadsheets/d/1Z9VKcE05zaiLd6rUOWAuvDVOzcB6B6qPs2EvGBUPQL4/edit?gid=0#gid=0'
+    sheet_url = # insert google sheets url
     worksheet = gc.open_by_url(sheet_url).sheet1  # Open the first sheet
 
     # Append new data to the spreadsheet
