@@ -7,6 +7,8 @@ import pandas as pd
 from lxml import html
 import pytz
 
+# Get today's date in the required format (e.g., '2023-07-12')
+today_date = datetime.now().strftime('%Y-%m-%d')
 
 # Define London timezone
 london_tz = pytz.timezone('Europe/London')
