@@ -7,6 +7,9 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 
+# Get today's date in the required format (e.g., '2023-07-12')
+today_date = datetime.now().strftime('%Y-%m-%d')
+
 # Mount Google Drive
 drive.mount('/content/drive')
 
