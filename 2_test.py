@@ -184,7 +184,9 @@ def main():
             time_of_search = now_london.strftime('%Y-%m-%d %H:%M')
             weather_data = get_weather_data(session, time_of_search)
 
-            # Print the fetched weather data
+           # Print the fetched weather data
+            print(f'--------------------------\n{time_of_search}\n--------------------------')
+
             print("Weather data fetched:")
             for key, value in weather_data.items():
                 print(f"{key}: {value}")
@@ -199,16 +201,16 @@ def main():
 
             update_google_sheet(weather_data)  # Update Google Sheet with weather data
 
-            print(f"Weather data saved and Google Sheet updated successfully")
+            print(f"Weather data saved and Google Sheet updated successfully\n")
 
-            time.sleep(30)  # Wait for 30 minutes before fetching data again
+            time.sleep(600)  # Wait for 10 minutes before fetching data again
 
         except Exception as e:
             print(f"Error occurred: {e}")
             print("Reconnecting Google Drive...")
             drive.mount('/content/drive', force_remount=True)  # Remount Google Drive
-            print("Reconnected. Retrying in 15 minutes...")
-            time.sleep(900)  # Wait for 15 minutes before retrying
+            print("Reconnected. Retrying in 10 minutes...")
+            time.sleep(600)  # Wait for 10 minutes before retrying
 
 if __name__ == "__main__":
     main()
