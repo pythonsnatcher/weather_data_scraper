@@ -1,0 +1,276 @@
+---
+title: 'Weather Data Analysis'
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+## Introduction
+
+In this report, we analyze weather data collected from London, including temperature, wind speed, and tide heights. The goal is to explore various aspects of the weather patterns, identify trends, and visualize key metrics to gain a deeper understanding of local weather conditions.
+
+## Data Overview
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(corrplot)  # For correlation matrix plot
+
+# Load the data (replace with your actual file path)
+data <- read.csv("/Users/snatch./PycharmProjects/weather_data/18.csv")
+
+# Clean data
+data$high_temperature <- as.numeric(gsub("[^0-9.]", "", as.character(data$high_temperature)))
+data$low_temperature <- as.numeric(gsub("[^0-9.]", "", as.character(data$low_temperature)))
+data$current_temperature <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(data$current_temperature))))
+data$wind_speed <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(data$wind_speed))))
+data$humidity <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(data$humidity))))
+data$chance_of_precipitation <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(data$chance_of_precipitation))))
+
+data$pressure <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(data$pressure))))
+data$time_of_search <- as.POSIXct(data$time_of_search, format = "%Y-%m-%d %H:%M")
+data$date <- as.Date(data$time_of_search)
+
+# Convert sunrise and sunset from character to POSIXct (time)
+data$sunset <- as.POSIXct(data$sunset, format = "%H:%M", tz = "UTC")
+data$sunrise <- as.POSIXct(data$sunrise, format = "%H:%M", tz = "UTC")
+
+```
+
+
+
+
+```{r}
+# Check the structure of the data
+str(data)
+```
+
+```{r}
+# Clean data: Remove non-numeric characters and convert to numeric
+data$high_temperature <- as.numeric(gsub("[^0-9.]", "", as.character(data$high_temperature)))
+data$low_temperature <- as.numeric(gsub("[^0-9.]", "", as.character(data$low_temperature)))
+data$current_temperature <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(data$current_temperature))))
+data$wind_speed <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(data$wind_speed))))
+data$humidity <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(data$humidity))))
+data$pressure <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(data$pressure))))
+
+```
+
+```{r}
+# Convert 'time_of_search' to datetime format
+data$time_of_search <- as.POSIXct(data$time_of_search, format = "%Y-%m-%d %H:%M")
+```
+
+```{r}
+# Display the first few rows of the data
+head(data)
+```
+
+```{r}
+# Summary statistics for the dataset
+summary(data)
+```
+
+```{r}
+# Histogram for high temperatures
+ggplot(data, aes(x = high_temperature)) + 
+  geom_histogram(binwidth = 2, fill = "blue", color = "white") +
+  labs(title = "Distribution of High Temperatures", x = "High Temperature (°C)", y = "Frequency") +
+  theme_minimal()
+```
+
+```{r}
+# Histogram for wind speed
+ggplot(data, aes(x = wind_speed)) + 
+  geom_histogram(binwidth = 1, fill = "orange", color = "white") +
+  labs(title = "Distribution of Wind Speed", x = "Wind Speed (km/h)", y = "Frequency") +
+  theme_minimal()
+```
+
+```{r}
+# Scatter plot of high temperature vs. wind speed
+ggplot(data, aes(x = high_temperature, y = wind_speed)) +
+  geom_point(color = "blue") +
+  labs(title = "High Temperature vs. Wind Speed", x = "High Temperature (°C)", y = "Wind Speed (km/h)") +
+  theme_minimal()
+```
+
+```{r}
+# Convert 'weather_description' to a factor for better plotting
+data$weather_description <- factor(data$weather_description)
+
+# Box plot of high temperature by weather condition with a cleaner design
+ggplot(data, aes(x = weather_description, y = high_temperature, fill = weather_description)) +
+  geom_boxplot(outlier.size = 2, outlier.colour = "red") +  # Highlight outliers
+  labs(title = "High Temperature by Weather Condition",
+       x = "Weather Description",
+       y = "High Temperature (°C)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better readability
+        legend.position = "none")  # Remove legend if it’s clear from the plot
+
+
+```
+
+```{r}
+# Time series plot of high temperature
+ggplot(data, aes(x = time_of_search, y = high_temperature)) +
+  geom_line(color = "blue") +
+  labs(title = "High Temperature Over Time", x = "Time", y = "High Temperature (°C)") +
+  theme_minimal()
+```
+
+```{r}
+# Correlation matrix plot (if you have multiple numeric columns)
+numeric_data <- data %>% select(high_temperature, low_temperature, current_temperature, wind_speed, humidity, pressure)
+correlation_matrix <- cor(numeric_data, use = "complete.obs")
+corrplot(correlation_matrix, method = "circle")
+```
+
+```{r}
+# Density plot of current temperature
+ggplot(data, aes(x = current_temperature, fill = "Current Temperature")) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Density Plot of Current Temperature", x = "Current Temperature (°C)", y = "Density") +
+  theme_minimal()
+```
+
+
+
+
+```{r}
+# Convert time to date
+data$date <- as.Date(data$time_of_search)
+
+# Convert tide heights to numeric
+data$low_tide_morning_height <- as.numeric(as.character(data$low_tide_morning_height))
+data$high_tide_morning_height <- as.numeric(as.character(data$high_tide_morning_height))
+data$low_tide_evening_height <- as.numeric(as.character(data$low_tide_evening_height))
+data$high_tide_evening_height <- as.numeric(as.character(data$high_tide_evening_height))
+
+# Get the daily maximum and minimum tide heights
+daily_tides <- data %>%
+  group_by(date) %>%
+  summarise(
+    max_tide_height = max(c(low_tide_morning_height, high_tide_morning_height, low_tide_evening_height, high_tide_evening_height), na.rm = TRUE),
+    min_tide_height = min(c(low_tide_morning_height, high_tide_morning_height, low_tide_evening_height, high_tide_evening_height), na.rm = TRUE)
+  )
+
+# Plot the daily maximum and minimum tide heights
+ggplot(daily_tides, aes(x = date)) +
+  geom_line(aes(y = max_tide_height, color = "Maximum Tide Height"), size = 1) +
+  geom_line(aes(y = min_tide_height, color = "Minimum Tide Height"), size = 1) +
+  labs(title = "Daily Maximum and Minimum Tide Heights",
+       x = "Date",
+       y = "Tide Height (m)",
+       color = "Tide Type") +
+  scale_color_manual(values = c("Maximum Tide Height" = "red", 
+                                "Minimum Tide Height" = "blue")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# Clean data: Convert columns to numeric
+data$high_temperature <- as.numeric(gsub("[^0-9.]", "", as.character(data$high_temperature)))
+data$wind_speed <- as.numeric(gsub("[^0-9.]", "", as.character(data$wind_speed)))
+data$humidity <- as.numeric(gsub("[^0-9.]", "", as.character(data$humidity)))
+
+# Bubble plot of high temperature vs. wind speed with bubble size representing humidity
+ggplot(data, aes(x = high_temperature, y = wind_speed, size = humidity, color = humidity)) +
+  geom_point(alpha = 0.7) +
+  scale_size_continuous(range = c(1, 15)) +
+  scale_color_viridis_c() +
+  labs(title = "Bubble Plot of High Temperature vs. Wind Speed",
+       x = "High Temperature (°C)",
+       y = "Wind Speed (km/h)",
+       size = "Humidity (%)",
+       color = "Humidity (%)") +
+  theme_minimal()
+
+```
+
+
+
+
+```{r}
+# Calculate average high temperature by weather description
+avg_temp_by_weather <- data %>%
+  group_by(weather_description) %>%
+  summarise(mean_temp = mean(high_temperature, na.rm = TRUE),
+            sd_temp = sd(high_temperature, na.rm = TRUE),
+            n = n())
+
+# Calculate standard error for error bars
+avg_temp_by_weather <- avg_temp_by_weather %>%
+  mutate(se_temp = sd_temp / sqrt(n))
+
+# Plot the bar plot
+ggplot(avg_temp_by_weather, aes(x = reorder(weather_description, mean_temp), y = mean_temp, fill = weather_description)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = mean_temp - se_temp, ymax = mean_temp + se_temp), width = 0.2) +
+  labs(title = "Average High Temperature by Weather Description", x = "Weather Description", y = "Average High Temperature (°C)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+```
+
+
+```{r}
+# Time series plot of sunrise and sunset times with improved visuals
+ggplot(data, aes(x = date)) +
+  geom_line(aes(y = sunrise, color = "Sunrise"), size = 1.2) +
+  geom_line(aes(y = sunset, color = "Sunset"), size = 1.2) +
+  geom_point(aes(y = sunrise, color = "Sunrise"), size = 2) +
+  geom_point(aes(y = sunset, color = "Sunset"), size = 2) +
+  labs(title = "Sunrise and Sunset Times Over Time",
+       x = "Date",
+       y = "Time",
+       color = "Event") +
+  scale_color_manual(values = c("Sunrise" = "blue", "Sunset" = "red")) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    panel.grid.major = element_line(color = "grey90", linetype = "dashed")
+  ) +
+  scale_y_time(labels = scales::time_format("%H:%M:%S"), breaks = seq(from = as.POSIXct("00:00", format = "%H:%M"), to = as.POSIXct("23:59", format = "%H:%M"), by = "2 hours")) +
+  scale_x_date(date_labels = "%b %d", date_breaks = "1 week")
+```
+
+
+
+
+```{r bubble_plot_filtered, echo=TRUE, warning=FALSE, message=FALSE}
+# Load necessary libraries
+library(tidyverse)
+library(scales)  # For custom color scales
+
+# Filter data to exclude chance of precipitation values less than 1%
+filtered_data <- data %>%
+  filter(chance_of_precipitation >= 1)
+
+# Bubble plot of chance of precipitation with fixed small size bubbles and a color scheme from red to blue
+ggplot(filtered_data, aes(x = time_of_search, y = chance_of_precipitation, color = current_temperature)) +
+  geom_point(size = 2, alpha = 0.7) +  # Set a fixed small size for all bubbles
+  scale_color_gradient(low = "blue", high = "red") +  # Color gradient from blue (low temp) to red (high temp)
+  labs(title = "Bubble Plot of Chance of Precipitation Over Time",
+       x = "Time",
+       y = "Chance of Precipitation (%)",
+       color = "Current Temperature (°C)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+```
+
+
